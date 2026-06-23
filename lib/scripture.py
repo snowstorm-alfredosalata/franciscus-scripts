@@ -21,7 +21,11 @@ BOOK_MAP: dict[str, str] = {
     "Num":   "Num",
     "Deut":  "Deut",
     "Ios":   "Josh",
-    "Iud":   "Judg",
+    "Iods":  "Josh",
+    # "Iud" is ambiguous (Iudicum=Judges vs. Iudae=Jude) — mapped to Jude
+    # below because it's more common as a NT abbreviation.  Judges uses the
+    # unambiguous "Iudc" form in Quaracchi editions.
+    "Iudc":  "Judg",
     "Rut":   "Ruth",
     "1Re":   "1 Kgs",
     "2Re":   "2 Kgs",
@@ -86,8 +90,11 @@ def build_patterns(book_map: dict[str, str] | None = None):
 
     Returns (re_cfr, re_single):
       re_cfr    — matches full parenthetical citations: (cfr. Book ch,v)
-                   and bare (Book ch,v)
+                   and bare (Book ch,v).  Also handles bare continuations
+                   where the book name is omitted after ";":
+                   (cfr. Apoc 6,12; 7,2)
       re_single — matches one "Book ch,v" inside a multi-ref string
+      re_cont   — matches a bare "ch,v" continuation (no book name)
     """
     bmap = book_map or BOOK_MAP
     book_pat = "|".join(
@@ -96,13 +103,16 @@ def build_patterns(book_map: dict[str, str] | None = None):
     re_cfr = re.compile(
         r"\((?:[Cc]fr\.?\s+)?"
         r"((?:" + book_pat + r"),?\s*\d+[,:\.\s\d\-]*"
-        r"(?:;\s*(?:" + book_pat + r"),?\s*\d+[,:\.\s\d\-]*)*"
+        r"(?:;\s*(?:(?:" + book_pat + r"),?\s*)?\d+[,:\.\s\d\-]*)*"
         r")\)",
     )
     re_single = re.compile(
         r"(" + book_pat + r"),?\s*(\d+(?:\s*,\s*\d+(?:\s*-\s*\d+)?)?)"
     )
-    return re_cfr, re_single
+    re_cont = re.compile(
+        r"(\d+(?:\s*,\s*\d+(?:\s*-\s*\d+)?)?)"
+    )
+    return re_cfr, re_single, re_cont
 
 
 def roman_to_int(roman: str) -> int:

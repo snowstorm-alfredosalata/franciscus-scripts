@@ -33,21 +33,37 @@ from lib.scripture import BOOK_MAP, build_patterns  # noqa: E402
 
 def convert_citations(text: str, book_map: dict[str, str]) -> str:
     """Replace parenthetical citations with <ref to="…"> markers."""
-    re_cfr, re_single = build_patterns(book_map)
+    re_cfr, re_single, re_cont = build_patterns(book_map)
     warnings: list[str] = []
 
     def _replace(m: re.Match) -> str:
         refs_raw = m.group(1)
-        citations = re_single.findall(refs_raw)
-        if not citations:
-            warnings.append(f"Could not parse ref: {m.group(0)}")
+        parts = [p.strip() for p in refs_raw.split(";")]
+        ref_values = []
+        last_book_lat = ""
+        for part in parts:
+            found = re_single.search(part)
+            if found:
+                last_book_lat = found.group(1)
+                book_eng = book_map.get(last_book_lat, last_book_lat)
+                loc_norm = found.group(2).replace(",", ":").replace(" ", "")
+                ref_values.append(f"{book_eng} {loc_norm}")
+            elif last_book_lat:
+                # Bare continuation: "7,2" inherits the previous book
+                cont = re_cont.match(part)
+                if cont:
+                    book_eng = book_map.get(last_book_lat, last_book_lat)
+                    loc_norm = cont.group(1).replace(",", ":").replace(" ", "")
+                    ref_values.append(f"{book_eng} {loc_norm}")
+                else:
+                    warnings.append(f"Could not parse continuation: {part!r} in {m.group(0)}")
+            else:
+                warnings.append(f"Could not parse ref: {part!r} in {m.group(0)}")
+
+        if not ref_values:
+            warnings.append(f"No refs extracted from: {m.group(0)}")
             return m.group(0)
 
-        ref_values = []
-        for book_lat, loc in citations:
-            book_eng = book_map.get(book_lat, book_lat)
-            loc_norm = loc.replace(",", ":").replace(" ", "")
-            ref_values.append(f"{book_eng} {loc_norm}")
         return '<ref to="' + "; ".join(ref_values) + '">'
 
     result = re_cfr.sub(_replace, text)

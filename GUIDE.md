@@ -33,7 +33,8 @@ franciscus-scripts/
 ├── validate/               Quality gate
 │   └── validate_format.py  Check all FORMAT.md requirements
 │
-└── extract_1cel.py         Document-specific driver for 1Celano
+├── extract_1cel.py         Document-specific driver for 1Celano
+└── extract_legmai.py       Document-specific driver for Legenda Maior
 ```
 
 ## How the pipeline works
@@ -125,6 +126,21 @@ Items that always need human review:
 - **Typos in the source** — the PDF itself may contain errors (e.g.
   "dsicipulus" for "discipulus").
 
+#### PDF-level citation defects (found in Legenda Maior, likely in others)
+
+These are errors in the source PDF that prevent automatic conversion:
+
+- **Missing opening paren** — `cfr. Book ch,v; Book ch,v)` with no `(`.
+  Search regex: `(?<!\()cfr\.\s+\w+\s+\d+,\d+`.
+- **Abbreviated prefix** — `(c Book ch,v)` instead of `(cfr. Book ch,v)`.
+- **Lowercase book name** — OCR reads `ioa` instead of `Ioa`, so the
+  abbreviation doesn't match `BOOK_MAP`.
+- **Fused characters** — e.g. `9cfr.` where the paren is missing and the
+  preceding verse number runs into the citation.
+- **Inline (non-parenthetical) citations** — direct quotations cite the
+  verse inline: `iuxta illud Luc 21,15`.  These are intentional in the
+  source and should be wrapped manually if appropriate.
+
 ## Using the scripts standalone
 
 Every script under `extract_pdf/`, `postprocess/`, and `validate/` also
@@ -159,8 +175,9 @@ python validate/validate_format.py final.md
 Contains:
 - **`BOOK_MAP`** — Latin → anglophone abbreviation dict
   (Quaracchi / Analecta Franciscana conventions)
-- **`build_patterns(book_map)`** — compiles `re_cfr` and `re_single`
-  regexes from any book map
+- **`build_patterns(book_map)`** — compiles `re_cfr`, `re_single`, and
+  `re_cont` regexes from any book map.  `re_cont` handles bare
+  continuations like `; 7,2` (no book name after the semicolon).
 - **`roman_to_int(s)`** — Roman numeral → int conversion
 
 If a new PDF uses abbreviations not in `BOOK_MAP`, add them there so all

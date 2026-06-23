@@ -49,7 +49,8 @@ franciscus-scripts/
 │   └── fix_ref_verse.py       Prevent <ref> tags from straddling verse markers
 ├── validate/
 │   └── validate_format.py     Check all FORMAT.md requirements
-└── extract_1cel.py            Document-specific driver for 1Celano (Vita Prima)
+├── extract_1cel.py            Document-specific driver for 1Celano (Vita Prima)
+└── extract_legmai.py          Document-specific driver for Legenda Maior (Bonaventure)
 ```
 
 ## Standalone usage
