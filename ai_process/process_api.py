@@ -49,7 +49,13 @@ def call_claude(client: anthropic.Anthropic, model: str, system_prompt: str, use
         response = client.messages.create(
             model=model,
             max_tokens=8192,
-            system=system_prompt,
+            # System prompt is identical for every block in a run, so cache it:
+            # the first block pays the write, the rest read at ~0.1x.
+            system=[{
+                "type": "text",
+                "text": system_prompt,
+                "cache_control": {"type": "ephemeral"},
+            }],
             messages=[{"role": "user", "content": user_prompt}],
             output_config={
                 "format": {

@@ -171,39 +171,81 @@ def load_attributes_toml(path: Path) -> str:
 
 
 def build_prompt(block: Block, *, translate: str | None, annotate_context: str | None) -> str:
-    """Build the user prompt for a single block."""
-    parts = []
+    """Build the user prompt for a single block.
 
+    Kept deliberately minimal: this is the only part that varies per block, so the
+    constant instructions live in the system prompt (which is cached). The output
+    fields are enforced by the JSON schema, not restated here.
+    """
     if block.kind == "title":
-        parts.append(f"This is a document title (H1 heading):\n\n{block.raw.lstrip('# ')}")
-    elif block.kind == "chapter":
-        parts.append(f"This is a chapter heading:\n\n{block.chapter_title}")
-    elif block.kind == "aside":
-        parts.append(f"This is a rubric/aside (non-numbered text):\n\n{block.raw}")
-    elif block.kind == "paragraph":
-        parts.append(f"This is paragraph [{block.paragraph_id}] of a medieval Latin Franciscan text:\n\n{block.raw}")
+        return f"Document title (H1 heading):\n\n{block.raw.lstrip('# ')}"
+    if block.kind == "chapter":
+        return f"Chapter heading:\n\n{block.chapter_title}"
+    if block.kind == "aside":
+        return f"Rubric / aside (non-numbered text):\n\n{block.raw}"
+    return f"Paragraph [{block.paragraph_id}] of a medieval Latin Franciscan text:\n\n{block.raw}"
 
-    parts.append("\nRespond with a JSON object containing ONLY the requested fields:")
 
-    if translate:
-        parts.append(f'- "translated": your translation into {translate}. Preserve [n] verse markers and <ref to="...">...</ref> tags exactly as-is in their original positions.')
+# BCP-47 base codes → full language names, so the prompt reads "into Italian"
+# rather than "into it" (which the model misreads as the English pronoun).
+_LANG_NAMES = {
+    "it": "Italian",
+    "en": "English",
+    "fr": "French",
+    "de": "German",
+    "es": "Spanish",
+    "pt": "Portuguese",
+    "la": "Latin",
+    "nl": "Dutch",
+    "pl": "Polish",
+    "ca": "Catalan",
+}
 
-    if annotate_context and block.kind == "paragraph":
-        parts.append('- "attributes": a comma-separated string of type:value pairs (e.g. "person:franciscus, place:assisium, virtue:paupertas"). Use the preferred attribute values when applicable, but you may propose new ones for persons, places, and events.')
 
-    return "\n".join(parts)
+def language_name(tag: str) -> str:
+    """Resolve a BCP-47 tag (e.g. 'it', 'pt-BR') to a full language name for the prompt."""
+    base = tag.split("-")[0].lower()
+    return _LANG_NAMES.get(base, tag)
 
 
 def build_system_prompt(*, translate: str | None, annotate_context: str | None) -> str:
+    """Build the system prompt — constant across every block in a run, so it can be cached.
+
+    All standing instructions (translation style, annotation standards, the
+    attribute list) belong here rather than in the per-block user prompt: that keeps
+    the cacheable prefix large and the volatile per-call payload small.
+    """
     lines = [
-        "You are a specialist in medieval Latin Franciscan texts.",
-        "You process one text block at a time and return ONLY valid JSON — no markdown fencing, no commentary.",
+        "You are a scholar of medieval Latin Franciscan hagiography.",
+        "You process one text block at a time and return ONLY a JSON object matching the requested schema — no markdown fences, no commentary.",
     ]
     if translate:
-        lines.append(f"When translating: produce a faithful, scholarly translation into '{translate}'. Preserve all [n] verse markers and <ref to=\"...\">...</ref> XML tags in their exact positions within the text.")
+        lines.append(
+            f"\nTRANSLATION (the 'translated' field): render the Latin into {language_name(translate)} as polished literary "
+            "prose — elegant and idiomatic for a modern reader, faithful to the meaning, register, and "
+            "rhetorical movement of the original. Lean toward literary quality over word-for-word literalism, "
+            "but never so free that sense or tone is lost, nor so literal that it reads as a crib. "
+            "Preserve every [n] verse marker and every <ref to=\"...\">...</ref> tag verbatim and in its "
+            "original position; translate only the text around and inside them."
+        )
     if annotate_context:
-        lines.append("When annotating: identify virtues, topics, events, places, and persons mentioned in the paragraph. Use the preferred attribute values listed below when applicable. You may propose new values especially for persons, places, and events not in the list.")
-        lines.append(f"\nPreferred attributes:\n{annotate_context}")
+        lines.append(
+            "\nANNOTATION (the 'attributes' field, paragraphs only): a comma-separated string of type:value "
+            "pairs, e.g. \"person:francis, place:assisi, event:conversion_of_francis, virtue:poverty\". "
+            "Prefer a value from the list below when one fits; otherwise coin a new lowercase snake_case "
+            "value in the same style. Apply these standards:\n"
+            "- person, place: annotate every clearly identifiable person and place. Omit one only when its "
+            "identification is genuinely uncertain. Coin new values freely for identified persons or places "
+            "not in the list.\n"
+            "- event: annotate when you are confident the passage genuinely depicts that event. Coin new "
+            "event values as needed for clearly depicted events not in the list.\n"
+            "- topic: annotate only topics clearly central to the passage, and coin new topics sparingly — "
+            "only when no existing topic fits and the theme is plainly important.\n"
+            "- virtue: annotate a virtue only when the passage is especially significant or exemplary for it, "
+            "not for incidental mentions. Coin a new virtue only if one is severely missing from the list.\n"
+            "If nothing meets these standards, return an empty string."
+        )
+        lines.append(f"\nPreferred attribute values:\n{annotate_context}")
     return "\n".join(lines)
 
 
