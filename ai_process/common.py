@@ -153,21 +153,35 @@ def save_progress_entry(path: Path, key: str, block_kind: str, result: dict) -> 
 
 
 def load_attributes_toml(path: Path) -> str:
-    """Load the attributes TOML and format as context for Claude."""
+    """Load the attributes TOML and format as context for Claude.
+
+    Each category is rendered as the literal ``type:value`` pairs the model is
+    allowed to emit, so the closed vocabulary can be copied character-for-character.
+    The TOML nests values under a ``values`` key (``[virtue]\\nvalues = [...]``);
+    that key is unwrapped so the type is the category name, not ``virtue.values``.
+    """
+
+    def value_lists(category: str, node) -> list[tuple[str, list]]:
+        """Yield (type, values) pairs, unwrapping the conventional `values` key."""
+        if isinstance(node, list):
+            return [(category, node)]
+        if isinstance(node, dict):
+            if isinstance(node.get("values"), list):
+                return [(category, node["values"])]
+            pairs = []
+            for sub, vals in node.items():
+                pairs.extend(value_lists(f"{category}.{sub}", vals))
+            return pairs
+        return []
+
     with open(path, "rb") as f:
         data = tomllib.load(f)
 
     parts = []
-    for category, values in data.items():
-        if isinstance(values, list):
-            parts.append(f"[{category}]\n" + "\n".join(f"  - {v}" for v in values))
-        elif isinstance(values, dict):
-            for sub, vals in values.items():
-                if isinstance(vals, list):
-                    parts.append(f"[{category}.{sub}]\n" + "\n".join(f"  - {v}" for v in vals))
-                else:
-                    parts.append(f"[{category}.{sub}] = {vals}")
-    return "\n".join(parts)
+    for category, node in data.items():
+        for type_name, values in value_lists(category, node):
+            parts.append("\n".join(f"{type_name}:{v}" for v in values))
+    return "\n\n".join(parts)
 
 
 def build_prompt(block: Block, *, translate: str | None, annotate_context: str | None) -> str:
@@ -231,21 +245,25 @@ def build_system_prompt(*, translate: str | None, annotate_context: str | None) 
     if annotate_context:
         lines.append(
             "\nANNOTATION (the 'attributes' field, paragraphs only): a comma-separated string of type:value "
-            "pairs, e.g. \"person:francis, place:assisi, event:conversion_of_francis, virtue:poverty\". "
-            "Prefer a value from the list below when one fits; otherwise coin a new lowercase snake_case "
-            "value in the same style. Apply these standards:\n"
-            "- person, place: annotate every clearly identifiable person and place. Omit one only when its "
-            "identification is genuinely uncertain. Coin new values freely for identified persons or places "
-            "not in the list.\n"
-            "- event: annotate when you are confident the passage genuinely depicts that event. Coin new "
-            "event values as needed for clearly depicted events not in the list.\n"
-            "- topic: annotate only topics clearly central to the passage, and coin new topics sparingly — "
-            "only when no existing topic fits and the theme is plainly important.\n"
-            "- virtue: annotate a virtue only when the passage is especially significant or exemplary for it, "
-            "not for incidental mentions. Coin a new virtue only if one is severely missing from the list.\n"
+            "pairs, e.g. \"person:st_francis_of_assisi, place:assisi, event:conversion_of_francis, "
+            "virtue:poverty\".\n"
+            "CLOSED VOCABULARY — you may use ONLY the exact type:value pairs listed below. Never invent, coin, "
+            "modify, pluralize, or rephrase a value, and never introduce a new type. If a person, place, event, "
+            "topic, or virtue is present but not in the list, do not annotate it at all. Every pair you output "
+            "must match an entry below character-for-character.\n"
+            "Apply these standards:\n"
+            "- person, place: annotate every listed person and place that the passage clearly refers to. Omit "
+            "one only when its identification is genuinely uncertain.\n"
+            "- event: annotate a listed event only when you are confident the passage genuinely depicts it.\n"
+            "- topic: annotate only listed topics that are clearly central to the passage. Be strict — typically "
+            "0 to 2 topics per paragraph, and never more than 2. Skip topics that are merely touched on or "
+            "implied.\n"
+            "- virtue: annotate a listed virtue only when the passage is especially significant or exemplary "
+            "for it, not for incidental mentions. Be strict — typically 0 to 2 virtues per paragraph, and never "
+            "more than 2.\n"
             "If nothing meets these standards, return an empty string."
         )
-        lines.append(f"\nPreferred attribute values:\n{annotate_context}")
+        lines.append(f"\nAllowed attribute values (the ONLY values you may use):\n{annotate_context}")
     return "\n".join(lines)
 
 
