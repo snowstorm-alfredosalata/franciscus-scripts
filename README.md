@@ -95,13 +95,13 @@ export ANTHROPIC_API_KEY="sk-ant-..."    # this environment variable
 # Translate a book into Italian
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md --translate it
 
-# Annotate paragraphs with semantic attributes (persons, places, events, topics, virtues)
+# Annotate paragraphs with semantic topics (persons, places, events, themes, virtues)
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md \
-    --annotate ../franciscus-data/attributes.toml
+    --annotate ../franciscus-data/topics.toml
 
 # Both in a single pass (recommended — see the resume caveat below)
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md \
-    --translate it --annotate ../franciscus-data/attributes.toml
+    --translate it --annotate ../franciscus-data/topics.toml
 
 # Preview the parsed blocks without calling the model
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md --translate it --dry-run
@@ -124,7 +124,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."    # this environment variable
 ### Notes
 
 - **Resume** — reruns skip blocks already recorded in the progress file. Interrupted runs continue where they left off.
-- **Prompt caching** (API variant) — the system prompt is sent as a cached block, so the standing instructions and attribute list are billed once per run rather than per block.
+- **Prompt caching** (API variant) — the system prompt is sent as a cached block, so the standing instructions and topic list are billed once per run rather than per block.
 - **Resume caveat** — the progress file is keyed by language only, *not* by which fields were requested. Run `--translate` and `--annotate` **together**, or delete the `.progress.jsonl` when changing the field set; otherwise a prior translate-only run is reused and annotations are never generated.
 
 ## Adding a new document

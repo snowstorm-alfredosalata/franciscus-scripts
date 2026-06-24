@@ -194,6 +194,6 @@ for one-off overrides without touching the shared code.
 | No headings below level 2                      | REQUIRED |
 | All body text inside `<p id="…">` or `<aside>` | REQUIRED |
 | No duplicate paragraph IDs                     | REQUIRED |
-| `<ref>` tags have non-empty `to` attributes    | REQUIRED |
+| `<ref>` tags have non-empty `to` attribute     | REQUIRED |
 | `<ref>` does not open immediately before `[N]` | REQUIRED |
 | `</ref>` does not close immediately after `[N]`| REQUIRED |

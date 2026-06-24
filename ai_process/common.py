@@ -152,8 +152,8 @@ def save_progress_entry(path: Path, key: str, block_kind: str, result: dict) -> 
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-def load_attributes_toml(path: Path) -> str:
-    """Load the attributes TOML and format as context for Claude.
+def load_topics_toml(path: Path) -> str:
+    """Load the topics TOML and format as context for Claude.
 
     Each category is rendered as the literal ``type:value`` pairs the model is
     allowed to emit, so the closed vocabulary can be copied character-for-character.
@@ -226,7 +226,7 @@ def build_system_prompt(*, translate: str | None, annotate_context: str | None) 
     """Build the system prompt — constant across every block in a run, so it can be cached.
 
     All standing instructions (translation style, annotation standards, the
-    attribute list) belong here rather than in the per-block user prompt: that keeps
+    topic list) belong here rather than in the per-block user prompt: that keeps
     the cacheable prefix large and the volatile per-call payload small.
     """
     lines = [
@@ -244,26 +244,26 @@ def build_system_prompt(*, translate: str | None, annotate_context: str | None) 
         )
     if annotate_context:
         lines.append(
-            "\nANNOTATION (the 'attributes' field, paragraphs only): a comma-separated string of type:value "
+            "\nANNOTATION (the 'topics' field, paragraphs only): a comma-separated string of type:value "
             "pairs, e.g. \"person:st_francis_of_assisi, place:assisi, event:conversion_of_francis, "
             "virtue:poverty\".\n"
             "CLOSED VOCABULARY — you may use ONLY the exact type:value pairs listed below. Never invent, coin, "
             "modify, pluralize, or rephrase a value, and never introduce a new type. If a person, place, event, "
-            "topic, or virtue is present but not in the list, do not annotate it at all. Every pair you output "
+            "theme, or virtue is present but not in the list, do not annotate it at all. Every pair you output "
             "must match an entry below character-for-character.\n"
             "Apply these standards:\n"
             "- person, place: annotate every listed person and place that the passage clearly refers to. Omit "
             "one only when its identification is genuinely uncertain.\n"
             "- event: annotate a listed event only when you are confident the passage genuinely depicts it.\n"
-            "- topic: annotate only listed topics that are clearly central to the passage. Be strict — typically "
-            "0 to 2 topics per paragraph, and never more than 2. Skip topics that are merely touched on or "
+            "- theme: annotate only listed themes that are clearly central to the passage. Be strict — typically "
+            "0 to 2 themes per paragraph, and never more than 2. Skip themes that are merely touched on or "
             "implied.\n"
             "- virtue: annotate a listed virtue only when the passage is especially significant or exemplary "
             "for it, not for incidental mentions. Be strict — typically 0 to 2 virtues per paragraph, and never "
             "more than 2.\n"
             "If nothing meets these standards, return an empty string."
         )
-        lines.append(f"\nAllowed attribute values (the ONLY values you may use):\n{annotate_context}")
+        lines.append(f"\nAllowed topic values (the ONLY values you may use):\n{annotate_context}")
     return "\n".join(lines)
 
 
@@ -277,11 +277,11 @@ def build_json_schema(*, translate: bool, annotate: bool, is_paragraph: bool) ->
         required.append("translated")
 
     if annotate and is_paragraph:
-        props["attributes"] = {
+        props["topics"] = {
             "type": "string",
             "description": "Comma-separated type:value pairs",
         }
-        required.append("attributes")
+        required.append("topics")
 
     return {
         "type": "object",
@@ -334,12 +334,12 @@ def compile_annotations(blocks: list[Block], results: list[dict], work_id: str) 
     for block, res in zip(blocks, results):
         if block.kind != "paragraph":
             continue
-        attrs = res.get("attributes", "")
-        if not attrs:
+        topics = res.get("topics", "")
+        if not topics:
             continue
         annotations.append({
             "paragraph": block.paragraph_id,
-            "attributes": attrs,
+            "topics": topics,
             "by": "Claude <noreply@anthropic.com>",
             "by_type": "ai",
             "verified": False,
@@ -355,7 +355,7 @@ def build_arg_parser(description: str) -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=description)
     parser.add_argument("source", help="Path to source .md file (e.g. books/1Cel.md)")
     parser.add_argument("--translate", metavar="LANG", help="Target language BCP-47 tag (e.g. it, en, fr)")
-    parser.add_argument("--annotate", metavar="TOML", help="Path to attributes TOML file")
+    parser.add_argument("--annotate", metavar="TOML", help="Path to topics TOML file")
     parser.add_argument("--output-dir", metavar="DIR", help="Output directory (default: same as source)")
     parser.add_argument("--compile", action="store_true", help="Recompile outputs from existing .progress.jsonl without calling Claude")
     parser.add_argument("--dry-run", action="store_true", help="Parse and show blocks without calling Claude")
@@ -393,14 +393,14 @@ def run(parser: argparse.ArgumentParser, args: argparse.Namespace, process_block
             print(f"  [{i:3d}] {b.kind:10s} | {label:15s} | {b.raw[:60]}...")
         sys.exit(0)
 
-    # Load attributes context
+    # Load topics context
     annotate_context = None
     if args.annotate:
         toml_path = Path(args.annotate)
         if not toml_path.exists():
-            print(f"Error: attributes TOML not found: {toml_path}", file=sys.stderr)
+            print(f"Error: topics TOML not found: {toml_path}", file=sys.stderr)
             sys.exit(1)
-        annotate_context = load_attributes_toml(toml_path)
+        annotate_context = load_topics_toml(toml_path)
 
     # Build system prompt (shared across all calls)
     system_prompt = build_system_prompt(

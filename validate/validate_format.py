@@ -8,7 +8,7 @@ Checks:
   4. No heading levels below 2
   5. All body text inside <p id="…"> or <aside>
   6. No duplicate paragraph IDs
-  7. <ref> tags have non-empty 'to' attributes
+  7. <ref> tags have non-empty 'to' attribute
   8. No <ref>-opens immediately before verse markers
   9. No </ref>-closes immediately after verse markers
 
