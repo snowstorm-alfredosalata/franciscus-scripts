@@ -28,6 +28,7 @@ class Block:
     raw: str
     chapter_id: str | None = None
     paragraph_id: str | None = None
+    aside_id: str | None = None
     chapter_title: str | None = None
 
 
@@ -45,6 +46,7 @@ def parse_blocks(text: str) -> list[Block]:
         i += 1  # past closing ---
 
     current_chapter_id: str | None = None
+    aside_count = 0  # per-chapter aside counter, mirrors server-side ingestion
 
     while i < len(lines):
         line = lines[i]
@@ -65,6 +67,7 @@ def parse_blocks(text: str) -> list[Block]:
         if m:
             anchor = re.search(r'<a id="([^"]+)">', stripped)
             current_chapter_id = anchor.group(1) if anchor else None
+            aside_count = 0
             title_text = re.sub(r'\s*<a id="[^"]+"></a>\s*', "", m.group(1)).strip()
             blocks.append(Block(
                 kind="chapter",
@@ -83,10 +86,13 @@ def parse_blocks(text: str) -> list[Block]:
                 aside_lines.append(lines[i])
                 i += 1
             i += 1  # past </aside>
+            aside_count += 1
+            aside_id = f"{current_chapter_id}-aside-{aside_count}" if current_chapter_id else None
             blocks.append(Block(
                 kind="aside",
                 raw="\n".join(aside_lines).strip(),
                 chapter_id=current_chapter_id,
+                aside_id=aside_id,
             ))
             continue
 
@@ -119,7 +125,7 @@ def parse_blocks(text: str) -> list[Block]:
 
 
 def block_key(index: int, block: Block) -> str:
-    label = block.paragraph_id or block.chapter_id or block.kind
+    label = block.paragraph_id or block.aside_id or block.chapter_id or block.kind
     return f"{index}:{block.kind}:{label}"
 
 
@@ -354,7 +360,7 @@ def main():
 
     if args.dry_run:
         for i, b in enumerate(blocks):
-            label = b.paragraph_id or b.chapter_id or b.kind
+            label = b.paragraph_id or b.aside_id or b.chapter_id or b.kind
             print(f"  [{i:3d}] {b.kind:10s} | {label:15s} | {b.raw[:60]}...")
         sys.exit(0)
 
@@ -413,7 +419,7 @@ def main():
                 results.append({})
                 continue
 
-            label = block.paragraph_id or block.chapter_id or block.kind
+            label = block.paragraph_id or block.aside_id or block.chapter_id or block.kind
             print(f"  [{i + 1}/{total}] {block.kind} {label}...", file=sys.stderr, end=" ", flush=True)
 
             user_prompt = build_prompt(block, translate=args.translate, annotate_context=annotate_context)
