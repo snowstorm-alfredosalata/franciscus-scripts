@@ -182,12 +182,12 @@ def parse_and_emit(page_html: str) -> str:
 
     output: list[str] = []
     output.append("---")
-    output.append("id: 3Soc")
     output.append('title: "Legenda Trium Sociorum"')
     output.append('author: "Fratres Leo, Rufinus et Angelus (attr.)"')
     output.append('date: "1246"')
     output.append('reference_edition: "Fontes Franciscani (Editiones Collegii S. Bonaventurae, 1995)"')
-    output.append("license: CC0-1.0")
+    output.append("description:")
+    output.append("notes:")
     output.append("---")
     output.append("")
     output.append("# LEGENDA TRIUM SOCIORUM")

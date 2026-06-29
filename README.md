@@ -73,7 +73,7 @@ python validate/validate_format.py final.md
 ## AI processing (translation & annotation)
 
 `ai_process/` feeds a FORMAT.md source to Claude block-by-block to produce a
-translated `.md` and/or a semantic-annotation `.json`. Two front-ends share all
+translated `.md` and/or a semantic-annotation `.yaml`. Two front-ends share all
 logic (`common.py`):
 
 - `process_api.py` — calls the Anthropic API directly (needs the `anthropic` SDK and an API key).
