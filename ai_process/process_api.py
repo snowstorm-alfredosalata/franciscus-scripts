@@ -8,8 +8,8 @@ ANTHROPIC_API_KEY environment variable. Shared logic lives in common.py.
 
 Usage:
     python ai_process/process_api.py books/1Cel.md --translate it
-    python ai_process/process_api.py books/1Cel.md --annotate topics.toml
-    python ai_process/process_api.py books/1Cel.md --translate it --annotate topics.toml
+    python ai_process/process_api.py books/1Cel.md --annotate topics/topics.yaml
+    python ai_process/process_api.py books/1Cel.md --translate it --annotate topics/topics.yaml
     python ai_process/process_api.py books/1Cel.md --translate it --compile  # recompile only
 """
 

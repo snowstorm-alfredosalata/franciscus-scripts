@@ -8,8 +8,8 @@ Claude via the `claude` CLI. See process_api.py for the Anthropic API variant.
 
 Usage:
     python ai_process/process.py books/1Cel.md --translate it
-    python ai_process/process.py books/1Cel.md --annotate topics.toml
-    python ai_process/process.py books/1Cel.md --translate it --annotate topics.toml
+    python ai_process/process.py books/1Cel.md --annotate topics/topics.yaml
+    python ai_process/process.py books/1Cel.md --translate it --annotate topics/topics.yaml
     python ai_process/process.py books/1Cel.md --translate it --compile  # recompile only
 """
 

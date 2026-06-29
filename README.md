@@ -97,11 +97,11 @@ export ANTHROPIC_API_KEY="sk-ant-..."    # this environment variable
 
 # Annotate paragraphs with semantic topics (persons, places, events, themes, virtues)
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md \
-    --annotate ../franciscus-data/topics.toml
+    --annotate ../franciscus-data/topics/topics.yaml
 
 # Both in a single pass (recommended — see the resume caveat below)
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md \
-    --translate it --annotate ../franciscus-data/topics.toml
+    --translate it --annotate ../franciscus-data/topics/topics.yaml
 
 # Preview the parsed blocks without calling the model
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md --translate it --dry-run
