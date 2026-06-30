@@ -176,12 +176,12 @@ class BodyParser(HTMLParser):
 # ── 4. emit ──────────────────────────────────────────────────────────────
 FRONTMATTER = """\
 ---
-id: Opuscula
 title: "Opuscula Omnia Sancti Francisci Assisiensis"
 author: "Franciscus Assisiensis"
 date: "1205-1226"
 reference_edition: "Kajetan Esser, Opuscula sancti patris Francisci Assisiensis (Grottaferrata, 1978); text from franciscanos.org (Directorio Franciscano)"
-license: CC0-1.0
+description:
+notes:
 ---
 """
 

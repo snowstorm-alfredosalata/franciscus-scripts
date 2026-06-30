@@ -94,12 +94,12 @@ def parse_and_emit(text: str) -> str:
 
     # ── Frontmatter ──────────────────────────────────────────────────
     output.append("---")
-    output.append("id: 2Cel")
     output.append('title: "Vita Secunda S. Francisci"')
     output.append('author: "Tommaso da Celano"')
     output.append('date: "1246-1247"')
     output.append('reference_edition: "Analecta Franciscana X (Quaracchi, 1926-1941)"')
-    output.append("license: CC0-1.0")
+    output.append("description:")
+    output.append("notes:")
     output.append("---")
     output.append("")
 

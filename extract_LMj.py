@@ -96,12 +96,12 @@ def parse_and_emit(text: str) -> str:
 
     # ── Frontmatter ──────────────────────────────────────────────────
     output.append("---")
-    output.append("id: LMj")
     output.append('title: "Legenda Maior Sancti Francisci"')
     output.append('author: "Bonaventura da Bagnoregio"')
     output.append('date: "1260-1263"')
     output.append('reference_edition: "Analecta Franciscana X (Quaracchi, 1926-1941)"')
-    output.append("license: CC0-1.0")
+    output.append("description:")
+    output.append("notes:")
     output.append("---")
     output.append("")
 

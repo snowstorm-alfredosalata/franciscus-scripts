@@ -11,7 +11,7 @@ import argparse
 import json
 import re
 import sys
-import tomllib
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -154,13 +154,13 @@ def save_progress_entry(path: Path, key: str, block_kind: str, result: dict) -> 
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
 
-def load_topics_toml(path: Path) -> str:
-    """Load the topics TOML and format as context for Claude.
+def load_topics(path: Path) -> str:
+    """Load the topics YAML and format as context for Claude.
 
     Each category is rendered as the literal ``type:value`` pairs the model is
     allowed to emit, so the closed vocabulary can be copied character-for-character.
-    The TOML nests values under a ``values`` key (``[virtue]\\nvalues = [...]``);
-    that key is unwrapped so the type is the category name, not ``virtue.values``.
+    A category maps to a list of values (``virtue: [...]``); a legacy ``values``
+    key is unwrapped so the type is the category name, not ``virtue.values``.
     """
 
     def value_lists(category: str, node) -> list[tuple[str, list]]:
@@ -176,8 +176,8 @@ def load_topics_toml(path: Path) -> str:
             return pairs
         return []
 
-    with open(path, "rb") as f:
-        data = tomllib.load(f)
+    with open(path, encoding="utf-8") as f:
+        data = yaml.safe_load(f)
 
     parts = []
     for category, node in data.items():
@@ -343,8 +343,7 @@ def compile_annotations(blocks: list[Block], results: list[dict], work_id: str) 
             "paragraph": block.paragraph_id,
             "topics": topics,
             "by": "Claude <noreply@anthropic.com>",
-            "by_type": "ai",
-            "verified": False,
+            "provenance": "ai",
         })
     return annotations
 
@@ -438,11 +437,11 @@ def run(parser: argparse.ArgumentParser, args: argparse.Namespace, process_block
     # Load topics context
     annotate_context = None
     if args.annotate:
-        toml_path = Path(args.annotate)
-        if not toml_path.exists():
-            print(f"Error: topics TOML not found: {toml_path}", file=sys.stderr)
+        topics_path = Path(args.annotate)
+        if not topics_path.exists():
+            print(f"Error: topics YAML not found: {topics_path}", file=sys.stderr)
             sys.exit(1)
-        annotate_context = load_topics_toml(toml_path)
+        annotate_context = load_topics(topics_path)
 
     # Build system prompt (shared across all calls)
     system_prompt = build_system_prompt(
@@ -522,7 +521,8 @@ def run(parser: argparse.ArgumentParser, args: argparse.Namespace, process_block
         print(f"\nTranslation written to: {out_path}", file=sys.stderr)
 
     if args.annotate:
-        out_path = output_dir / f"{work_id}.yaml"
+        out_name = f"{work_id}.yaml"
+        out_path = output_dir / out_name
         annotations = compile_annotations(blocks, results, work_id)
 
         # The sidecar (FORMAT.md §10) holds book-level "cover" properties

@@ -73,7 +73,7 @@ python validate/validate_format.py final.md
 ## AI processing (translation & annotation)
 
 `ai_process/` feeds a FORMAT.md source to Claude block-by-block to produce a
-translated `.md` and/or a semantic-annotation `.json`. Two front-ends share all
+translated `.md` and/or a semantic-annotation `.yaml`. Two front-ends share all
 logic (`common.py`):
 
 - `process_api.py` — calls the Anthropic API directly (needs the `anthropic` SDK and an API key).
@@ -97,11 +97,11 @@ export ANTHROPIC_API_KEY="sk-ant-..."    # this environment variable
 
 # Annotate paragraphs with semantic topics (persons, places, events, themes, virtues)
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md \
-    --annotate ../franciscus-data/topics.toml
+    --annotate ../franciscus-data/topics/topics.yaml
 
 # Both in a single pass (recommended — see the resume caveat below)
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md \
-    --translate it --annotate ../franciscus-data/topics.toml
+    --translate it --annotate ../franciscus-data/topics/topics.yaml
 
 # Preview the parsed blocks without calling the model
 .venv/bin/python ai_process/process_api.py ../franciscus-data/books/1Cel.md --translate it --dry-run
