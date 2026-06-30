@@ -1,0 +1,6 @@
+# PDF extraction pipeline
+pymupdf
+
+# AI translation / annotation (ai_process/) and sidecar (de)serialisation
+anthropic
+pyyaml

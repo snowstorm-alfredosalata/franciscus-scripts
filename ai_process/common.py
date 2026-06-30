@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
+import yaml
+
 # process_block(system_prompt, user_prompt, schema) -> parsed JSON dict (or {} on failure)
 ProcessBlock = Callable[[str, str, dict], dict]
 
@@ -347,6 +349,46 @@ def compile_annotations(blocks: list[Block], results: list[dict], work_id: str) 
     return annotations
 
 
+class _LiteralStr(str):
+    """A string emitted as a YAML literal block (`|`) — used for the multi-line
+    long descriptions so they stay human-readable."""
+
+
+class _SidecarDumper(yaml.SafeDumper):
+    pass
+
+
+_SidecarDumper.add_representer(
+    _LiteralStr,
+    lambda dumper, data: dumper.represent_scalar("tag:yaml.org,2002:str", str(data), style="|"),
+)
+
+
+def dump_sidecar(sidecar: dict) -> str:
+    """Serialise a per-book sidecar (FORMAT.md §10): cover descriptions
+    (language-keyed) on top, then the annotations list. The long `description`
+    is emitted as a literal block for readability."""
+    out = {}
+    for key in ("description_short", "description"):
+        block = sidecar.get(key)
+        if not block:
+            continue
+        if key == "description":
+            block = {
+                lang: _LiteralStr(v) if "\n" in str(v) else v for lang, v in block.items()
+            }
+        out[key] = block
+    out["annotations"] = sidecar.get("annotations", [])
+    return yaml.dump(
+        out,
+        Dumper=_SidecarDumper,
+        allow_unicode=True,
+        sort_keys=False,
+        default_flow_style=False,
+        width=4096,
+    )
+
+
 def build_arg_parser(description: str) -> argparse.ArgumentParser:
     """Build the argument parser shared by both processing tools.
 
@@ -480,17 +522,24 @@ def run(parser: argparse.ArgumentParser, args: argparse.Namespace, process_block
         print(f"\nTranslation written to: {out_path}", file=sys.stderr)
 
     if args.annotate:
-        out_name = f"{work_id}.json"
-        out_path = output_dir / out_name
+        out_path = output_dir / f"{work_id}.yaml"
         annotations = compile_annotations(blocks, results, work_id)
 
-        # Merge with existing annotations if file exists
+        # The sidecar (FORMAT.md §10) holds book-level "cover" properties
+        # (editorial descriptions, keyed by UI language) alongside the paragraph
+        # annotations. Load any existing sidecar so we preserve those cover
+        # properties and merge annotations rather than clobbering them.
+        sidecar = {}
         if out_path.exists():
-            existing = json.loads(out_path.read_text(encoding="utf-8"))
-            existing_ids = {a["paragraph"] for a in existing}
-            for ann in annotations:
-                if ann["paragraph"] not in existing_ids:
-                    existing.append(ann)
-            annotations = existing
+            loaded = yaml.safe_load(out_path.read_text(encoding="utf-8")) or {}
+            # Tolerate a legacy flat list of annotations.
+            sidecar = {"annotations": loaded} if isinstance(loaded, list) else loaded
 
-        out_path.write_text(json.dumps(annotations, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        existing = sidecar.get("annotations") or []
+        existing_ids = {a["paragraph"] for a in existing}
+        for ann in annotations:
+            if ann["paragraph"] not in existing_ids:
+                existing.append(ann)
+        sidecar["annotations"] = existing
+
+        out_path.write_text(dump_sidecar(sidecar), encoding="utf-8")
