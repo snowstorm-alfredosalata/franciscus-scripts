@@ -1,7 +1,7 @@
 """Shared logic for the Franciscus AI processing tools.
 
 Both `process.py` (Claude Code CLI) and `process_api.py` (Anthropic API) parse a
-FORMAT.md source into blocks, send each block to Claude for translation and/or
+corpus Markdown source into blocks, send each block to Claude for translation and/or
 annotation, save results incrementally to a `.progress.jsonl` file for resume, and
 recompile the outputs. Everything except the actual Claude invocation lives here;
 each tool supplies a `process_block` callable.
@@ -33,7 +33,7 @@ class Block:
 
 
 def parse_blocks(text: str) -> list[Block]:
-    """Parse a FORMAT.md-conforming file into ordered blocks."""
+    """Parse a corpus Markdown file into ordered blocks."""
     blocks: list[Block] = []
     lines = text.split("\n")
 
@@ -364,7 +364,7 @@ _SidecarDumper.add_representer(
 
 
 def dump_sidecar(sidecar: dict) -> str:
-    """Serialise a per-book sidecar (FORMAT.md §10): cover descriptions
+    """Serialise a per-book sidecar: cover descriptions
     (language-keyed) on top, then the annotations list. The long `description`
     is emitted as a literal block for readability."""
     out = {}
@@ -525,7 +525,7 @@ def run(parser: argparse.ArgumentParser, args: argparse.Namespace, process_block
         out_path = output_dir / out_name
         annotations = compile_annotations(blocks, results, work_id)
 
-        # The sidecar (FORMAT.md §10) holds book-level "cover" properties
+        # The sidecar holds book-level "cover" properties
         # (editorial descriptions, keyed by UI language) alongside the paragraph
         # annotations. Load any existing sidecar so we preserve those cover
         # properties and merge annotations rather than clobbering them.

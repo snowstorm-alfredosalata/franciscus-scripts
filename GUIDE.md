@@ -1,7 +1,7 @@
 # franciscus-scripts — Extraction Pipeline Guide
 
 Scripts for converting Franciscan source-text PDFs into
-[FORMAT.md](../franciscus-data/FORMAT.md)-compliant Markdown files.
+[spec/books.md](../franciscus-data/spec/books.md)-compliant Markdown files.
 
 ## Prerequisites
 
@@ -25,13 +25,13 @@ franciscus-scripts/
 │   ├── pdf_to_text.py      PyMuPDF page-by-page extraction
 │   └── strip_boilerplate.py  Remove licence / header / footer by sentinel
 │
-├── postprocess/            Text → FORMAT.md compliance
+├── postprocess/            Text → spec/books.md compliance
 │   ├── clean_text.py       Rejoin hyphenated words, collapse whitespace
 │   ├── convert_refs.py     Latin (cfr. …) citations → <ref to="…"> tags
 │   └── fix_ref_verse.py    Ensure <ref> tags don't straddle verse markers
 │
 ├── validate/               Quality gate
-│   └── validate_format.py  Check all FORMAT.md requirements
+│   └── validate_format.py  Check all spec/books.md requirements
 │
 ├── extract_1cel.py         Document-specific driver for 1Celano
 └── extract_legmai.py       Document-specific driver for Legenda Maior
@@ -184,7 +184,7 @@ If a new PDF uses abbreviations not in `BOOK_MAP`, add them there so all
 future extractors benefit.  `convert_refs.py` also accepts `--book-map`
 for one-off overrides without touching the shared code.
 
-## FORMAT.md rules enforced by the validator
+## spec/books.md rules enforced by the validator
 
 | Check                                         | Level    |
 |-----------------------------------------------|----------|

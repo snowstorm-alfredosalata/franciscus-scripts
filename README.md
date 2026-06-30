@@ -1,6 +1,6 @@
 # franciscus-scripts
 
-Python scripts for extracting and manipulating source texts into structured Markdown files compliant with the [FORMAT.md](../franciscus-data/FORMAT.md) specification.
+Python scripts for extracting and manipulating source texts into structured Markdown files compliant with the [spec/books.md](../franciscus-data/spec/books.md) specification.
 
 Processing a typical PDF file goes through six stages: text extraction, boilerplate stripping, whitespace cleanup, structural parsing, scripture-reference conversion, and format validation.
 
@@ -48,7 +48,7 @@ franciscus-scripts/
 │   ├── convert_refs.py        Latin citations → <ref to="…"> tags
 │   └── fix_ref_verse.py       Prevent <ref> tags from straddling verse markers
 ├── validate/
-│   └── validate_format.py     Check all FORMAT.md requirements
+│   └── validate_format.py     Check all spec/books.md requirements
 ├── ai_process/
 │   ├── common.py              Shared block parsing, prompts, progress, compilation
 │   ├── process.py             Translate / annotate via the `claude` CLI
@@ -72,7 +72,7 @@ python validate/validate_format.py final.md
 
 ## AI processing (translation & annotation)
 
-`ai_process/` feeds a FORMAT.md source to Claude block-by-block to produce a
+`ai_process/` feeds a spec/books.md source to Claude block-by-block to produce a
 translated `.md` and/or a semantic-annotation `.yaml`. Two front-ends share all
 logic (`common.py`):
 

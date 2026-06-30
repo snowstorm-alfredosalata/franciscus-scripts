@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Extract the *Opuscula Omnia Sancti Francisci* into one FORMAT.md book.
+"""Extract the *Opuscula Omnia Sancti Francisci* into one spec-compliant book.
 
 Input is the franciscanos.org page
 (https://www.franciscanos.org/esfa/omfra.html), optionally as a Chrome
@@ -12,7 +12,7 @@ chapter of a single book, keyed by the page's own in-document anchors
 (<A NAME="adm"/> → ## … <a id="adm"></a>). Titles and chapter order come
 from the page's index.
 
-Mapping to FORMAT.md:
+Mapping to the corpus format:
   * <SUP>N</SUP> verse markers      → [N] verse markers inside <p>
   * numbered paragraphs            → <p id="<slug>-<k>"> (k restarts per work)
   * rubrics / editorial headings   → <aside> (any non-numbered text)
@@ -248,7 +248,7 @@ def emit(index: list[tuple[str, str]], chapters: dict[str, list[_Para]]) -> str:
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Extract Opuscula Omnia → FORMAT.md")
+    ap = argparse.ArgumentParser(description="Extract Opuscula Omnia to Markdown")
     ap.add_argument("input", help="saved HTML page (view-source or plain), or -")
     ap.add_argument("-o", "--output", default="-", help="output .md (default stdout)")
     args = ap.parse_args()

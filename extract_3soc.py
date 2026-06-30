@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 extract_3soc.py — Extract the Legenda Trium Sociorum (Legend of the Three
-Companions) from an HTML source into a FORMAT.md-compliant Markdown file.
+Companions) from an HTML source into a spec-compliant Markdown file.
 
 Unlike the other drivers, the source for 3Soc is **HTML**, not a PDF, so this
 driver replaces the `pdf_to_text` stage with an HTML stage but reuses the rest
@@ -24,8 +24,8 @@ Structure of the underlying paxetbonum page:
     `<a name="1">` … `<a name="18">`, each followed by a bold heading
     ("Epistola" / "Caput I - …").
   - Paragraphs use **continuous** numbering 1–73, each marked by a bold
-    bare number `<b> N </b>` (FORMAT.md §6.1 → bare-integer paragraph ids).
-  - Within a paragraph, verses are `<br>K text` (FORMAT.md §9 → `[K]`).
+    bare number `<b> N </b>` (bare-integer paragraph ids).
+  - Within a paragraph, verses are `<br>K text` (rendered as `[K]`).
   - Scripture citations are already in Quaracchi `(cfr. Book ch,v)` form.
 
 Usage:
@@ -170,7 +170,7 @@ def _emit_chapter_body(body_html: str, output: list[str]) -> None:
 
 
 def parse_and_emit(page_html: str) -> str:
-    """Parse the paxetbonum page HTML into FORMAT.md Markdown.
+    """Parse the paxetbonum page HTML into spec-compliant Markdown.
 
     Emits raw (cfr. …) citations as-is — ref conversion is a later step.
     """
@@ -228,7 +228,7 @@ def parse_and_emit(page_html: str) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Extract Legenda Trium Sociorum from HTML to FORMAT.md Markdown"
+        description="Extract Legenda Trium Sociorum from HTML to Markdown"
     )
     parser.add_argument("html", help="Path to '3Soc.html' (Wayback view-source capture)")
     parser.add_argument("-o", "--output", help="Output .md file (default: stdout)")

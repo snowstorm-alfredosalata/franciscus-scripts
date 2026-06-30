@@ -12,7 +12,7 @@ import re
 
 # ── Latin → anglophone scripture-book abbreviations ──────────────────────
 # Keys  : abbreviations found in Quaracchi / Analecta Franciscana editions
-# Values: standard anglophone biblical notation (used in FORMAT.md refs)
+# Values: standard anglophone biblical notation (used in <ref> tags)
 BOOK_MAP: dict[str, str] = {
     # Old Testament
     "Gen":   "Gen",

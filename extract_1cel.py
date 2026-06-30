@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 extract_1cel.py — Extract 1Celano (Vita Prima) from the Quaracchi PDF
-into a FORMAT.md-compliant Markdown file.
+into a spec-compliant Markdown file.
 
 This is the document-specific driver.  It delegates to the shared pipeline
 modules for PDF extraction, text cleanup, scripture-ref conversion, and
@@ -61,7 +61,7 @@ def is_aside_line(line: str) -> bool:
 # ── Structural parser (1Cel-specific) ────────────────────────────────────
 
 def parse_and_emit(text: str) -> str:
-    """Parse cleaned text into FORMAT.md Markdown.
+    """Parse cleaned text into spec-compliant Markdown.
 
     Emits raw (cfr. …) citations as-is — ref conversion is a later step.
     """
@@ -236,7 +236,7 @@ def parse_and_emit(text: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract 1Celano from Quaracchi PDF to FORMAT.md Markdown"
+        description="Extract 1Celano from the Quaracchi PDF to Markdown"
     )
     parser.add_argument("pdf", help="Path to '1Celano - Quaracchi.pdf'")
     parser.add_argument("-o", "--output", help="Output .md file (default: stdout)")

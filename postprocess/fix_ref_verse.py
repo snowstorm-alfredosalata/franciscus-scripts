@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fix <ref> / verse-marker overlap in FORMAT.md files.
+"""Fix <ref> / verse-marker overlap in corpus Markdown files.
 
 Rules:
   - A <ref> opening tag must NOT appear immediately before a verse marker [N].
@@ -43,7 +43,7 @@ def fix(text: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Fix <ref>/verse-marker overlap in FORMAT.md files"
+        description="Fix <ref>/verse-marker overlap in corpus Markdown files"
     )
     parser.add_argument("input", help="Input .md file, or '-' for stdin")
     parser.add_argument("-o", "--output", help="Output file (default: stdout)")

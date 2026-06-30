@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Latin scripture citations to FORMAT.md <ref> tags.
+"""Convert Latin scripture citations to <ref> tags.
 
 Handles:
   - (cfr. Book ch,v)  — standard Quaracchi form

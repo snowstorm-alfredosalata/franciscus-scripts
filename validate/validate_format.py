@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a Markdown file against the Franciscus FORMAT.md specification.
+"""Validate a Markdown file against the Franciscus corpus format spec.
 
 Checks:
   1. YAML frontmatter with all six required fields
@@ -121,7 +121,7 @@ def validate(text: str) -> list[str]:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Validate FORMAT.md conformance")
+    parser = argparse.ArgumentParser(description="Validate corpus-format conformance")
     parser.add_argument("file", help="Markdown file to validate")
     args = parser.parse_args()
 

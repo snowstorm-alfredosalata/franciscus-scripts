@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 extract_2cel.py — Extract 2Celano (Vita Secunda) from the Quaracchi PDF
-into a FORMAT.md-compliant Markdown file.
+into a spec-compliant Markdown file.
 
 Document-specific driver.  Delegates to the shared pipeline modules for PDF
 extraction, text cleanup, scripture-ref conversion, and validation.  Only the
@@ -88,7 +88,7 @@ def clean_caput_rest(rest: str) -> str:
 # ── Structural parser (2Cel-specific) ─────────────────────────────────
 
 def parse_and_emit(text: str) -> str:
-    """Parse cleaned text into FORMAT.md Markdown."""
+    """Parse cleaned text into spec-compliant Markdown."""
     lines = text.split("\n")
     output: list[str] = []
 
@@ -330,7 +330,7 @@ def parse_and_emit(text: str) -> str:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Extract 2Celano from Quaracchi PDF to FORMAT.md Markdown"
+        description="Extract 2Celano from the Quaracchi PDF to Markdown"
     )
     parser.add_argument("pdf", help="Path to '2Celano - Quaracchi.pdf'")
     parser.add_argument("-o", "--output", help="Output .md file (default: stdout)")
