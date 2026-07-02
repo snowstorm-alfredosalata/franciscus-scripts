@@ -330,21 +330,20 @@ def compile_translation(source_text: str, blocks: list[Block], results: list[dic
     return "\n".join(output_lines) + "\n"
 
 
-def compile_annotations(blocks: list[Block], results: list[dict], work_id: str) -> list[dict]:
-    """Compile annotation entries from block results."""
-    annotations = []
+def compile_annotations(blocks: list[Block], results: list[dict], work_id: str) -> dict:
+    """Compile the paragraph-grouped annotations map (spec/annotations.md):
+    paragraph id → list of bare `type:value` scalars. AI authorship is implicit
+    (no `by`), so nothing else is emitted per item."""
+    annotations: dict = {}
     for block, res in zip(blocks, results):
         if block.kind != "paragraph":
             continue
         topics = res.get("topics", "")
         if not topics:
             continue
-        annotations.append({
-            "paragraph": block.paragraph_id,
-            "topics": topics,
-            "by": "Claude <noreply@anthropic.com>",
-            "provenance": "ai",
-        })
+        items = [t.strip() for t in topics.split(",") if t.strip()]
+        if items:
+            annotations[block.paragraph_id] = items
     return annotations
 
 
@@ -365,8 +364,8 @@ _SidecarDumper.add_representer(
 
 def dump_sidecar(sidecar: dict) -> str:
     """Serialise a per-book sidecar: cover descriptions
-    (language-keyed) on top, then the annotations list. The long `description`
-    is emitted as a literal block for readability."""
+    (language-keyed) on top, then the paragraph-grouped annotations map. The long
+    `description` is emitted as a literal block for readability."""
     out = {}
     for key in ("description_short", "description"):
         block = sidecar.get(key)
@@ -377,7 +376,7 @@ def dump_sidecar(sidecar: dict) -> str:
                 lang: _LiteralStr(v) if "\n" in str(v) else v for lang, v in block.items()
             }
         out[key] = block
-    out["annotations"] = sidecar.get("annotations", [])
+    out["annotations"] = sidecar.get("annotations", {})
     return yaml.dump(
         out,
         Dumper=_SidecarDumper,
@@ -531,15 +530,13 @@ def run(parser: argparse.ArgumentParser, args: argparse.Namespace, process_block
         # properties and merge annotations rather than clobbering them.
         sidecar = {}
         if out_path.exists():
-            loaded = yaml.safe_load(out_path.read_text(encoding="utf-8")) or {}
-            # Tolerate a legacy flat list of annotations.
-            sidecar = {"annotations": loaded} if isinstance(loaded, list) else loaded
+            sidecar = yaml.safe_load(out_path.read_text(encoding="utf-8")) or {}
 
-        existing = sidecar.get("annotations") or []
-        existing_ids = {a["paragraph"] for a in existing}
-        for ann in annotations:
-            if ann["paragraph"] not in existing_ids:
-                existing.append(ann)
+        # Grouped map (spec/annotations.md): don't clobber a paragraph a human
+        # may have edited — only add annotations for paragraphs not already keyed.
+        existing = sidecar.get("annotations") or {}
+        for pid, items in annotations.items():
+            existing.setdefault(pid, items)
         sidecar["annotations"] = existing
 
         out_path.write_text(dump_sidecar(sidecar), encoding="utf-8")
